@@ -1,58 +1,37 @@
-#include <stdio.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<arpa/inet.h>
+#define PORT 8080
 
-#define PORT 5035
-#define BUFFER 4096
-#define FILENAME 60
+int main(){
+int server;
+struct sockaddr_in servaddr,cliaddr;
+char buffer[1024]={0};
+socklen_t clen=sizeof(cliaddr);
+server = socket(AF_INET,SOCK_DGRAM,0);
+servaddr.sin_family=AF_INET;
+servaddr.sin_addr.s_addr=INADDR_ANY;
+servaddr.sin_port=htons(PORT);
+bind(server,(struct sockaddr*)&servaddr,sizeof(servaddr));
 
-int main() {
-    int serverSocket, clientSocket;
-    socklen_t clientLength;
-    struct sockaddr_in serverAddr, clientAddr;
-    char fileName[FILENAME], buffer[BUFFER];
-    FILE *file;
-
-    // Create socket
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    
-    // Configure server address
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(PORT);
-
-    // Bind socket
-    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-    printf("\nServer is bound to port %d", PORT);
-
-    // Listen for incoming connections
-    listen(serverSocket, 5);
-    printf("\nWaiting for client connection...");
-
-    // Accept client connection
-    clientLength = sizeof(clientAddr);
-    clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, &clientLength);
-    close(serverSocket);
-
-    // Receive filename from client
-    read(clientSocket, fileName, FILENAME);
-    printf("\nClient requested file: %s\n", fileName);
-
-    // Open the requested file
-    file = fopen(fileName, "r");
-
-    // Send file content
-    while (fgets(buffer, sizeof(buffer), file) != NULL) {
-        write(clientSocket, buffer, strlen(buffer));
+while(1){
+    memset(buffer,0,sizeof(buffer));
+    recvfrom(server,buffer,sizeof(buffer),0,(struct sockaddr*)&cliaddr,&clen);
+    printf("client: %s\n",buffer);
+    if(strcmp(buffer,"exit")==0){
+        break;
     }
+    printf("server:");
+    fgets(buffer,sizeof(buffer),stdin);
+    buffer[strcspn(buffer,"\n")]='\0';
+    sendto(server,buffer,sizeof(buffer),0,(struct sockaddr*)&cliaddr,clen);
 
-    fclose(file);
-    printf("\nFile transfer complete.\n");
+}
 
-    close(clientSocket);
-    return 0;
+close(server);
+return 0;
+
+
 }

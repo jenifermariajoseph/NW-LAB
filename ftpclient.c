@@ -1,44 +1,38 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<arpa/inet.h>
+#define PORT 8080
 
-#define PORT 5035
-#define BUFFER 60
+int main(){
+int client;
+struct sockaddr_in servaddr;
+char buffer[1024]={0};
+socklen_t slen =sizeof(servaddr);
+client = socket(AF_INET,SOCK_DGRAM,0);
+servaddr.sin_family=AF_INET;
+servaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
+servaddr.sin_port=htons(PORT);
 
-int main() {
-    int clientSocket, bytesRead;
-    struct sockaddr_in serverAddr;
-    char fileName[BUFFER], fileContent[BUFFER];
+while(1){
 
-    // Create socket
-    clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    
-    // Configure server address
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Localhost
-    serverAddr.sin_port = htons(PORT);
-
-    // Connect to server
-    connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-
-    // Get filename from user
-    printf("\nEnter the source file name: ");
-    scanf("%s", fileName);
-
-    // Send filename to server
-    write(clientSocket, fileName, BUFFER);
-
-    // Receive and display file content
-    while ((bytesRead = read(clientSocket, fileContent, BUFFER)) > 0) {
-        printf("%s", fileContent);
+    printf("client:");
+    fgets(buffer,sizeof(buffer),stdin);
+    buffer[strcspn(buffer,"\n")]='\0';
+    sendto(client,buffer,sizeof(buffer),0,(struct sockaddr*)&servaddr,slen);
+    if(strcmp(buffer,"exit")==0){
+        break;
     }
+    memset(buffer,0,sizeof(buffer));
+    recvfrom(client,buffer,sizeof(buffer),0,(struct sockaddr*)&servaddr,&slen);
+    printf("server: %s\n",buffer);
 
-    close(clientSocket);
-    return 0;
+
+}
+close(client);
+
+return 0;
+
+
 }
