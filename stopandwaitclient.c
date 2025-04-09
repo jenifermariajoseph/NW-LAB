@@ -19,6 +19,11 @@ int main(){
     servaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
     servaddr.sin_port = htons(PORT);
     connect(client, (struct sockaddr*)&servaddr, sizeof(servaddr));
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+
     while(packet<=max_packets){
         printf("Sending packet: %d\n", packet);
         send(client, &packet, sizeof(packet), 0);
