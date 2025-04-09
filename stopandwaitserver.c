@@ -10,6 +10,7 @@
 int main(){
     int server, client;
     struct sockaddr_in servaddr, cliaddr;
+    socklen_t clen = sizeof(cliaddr);
     int packet;
 
     srand(time(NULL)); // Seed for random number generation
@@ -19,14 +20,14 @@ int main(){
     servaddr.sin_port = htons(PORT);
     bind(server, (struct sockaddr*)&servaddr, sizeof(servaddr));
     listen(server, 1);
-    client = accept(server, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+    client = accept(server, (struct sockaddr*)&cliaddr, &clen);
     while(recv(client, &packet, sizeof(packet),0)>0){
         printf("Received packet: %d\n", packet);
         if(rand()%4 ==0){
             printf("ACK lost for packet: %d\n\n", packet);
             continue;
         }
-        send(client, &packet, sizeof(packet), 0);
+        send(client, "ACK", strlen("ACK"), 0);
         printf("ACK sent for packet: %d\n\n", packet);
     }
     close(client);

@@ -10,7 +10,7 @@ int main(){
     int client;
     struct sockaddr_in servaddr;
     char ack[10];
-    int packet;
+    int packet=1;
     int max_packets;
     printf("Enter number of packets to send: ");
     scanf("%d", &max_packets);
