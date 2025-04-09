@@ -1,44 +1,40 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <netinet/in.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <string.h>
+#define PORT 8080
 
 int main() {
-    int serverSocket, port;
-    struct sockaddr_in serverAddr, clientAddr;
-    socklen_t len;
-    char message[50];
+    int server;
+    struct sockaddr_in servaddr, cliAddr;
+    socklen_t clen=sizeof(cliAddr);
+    char buffer[1024] = {0};
 
     // Create UDP socket
-    serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // Initialize server address structure
-    bzero(&serverAddr, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-
-    printf("Enter port number: ");
-    scanf("%d", &port);
-    serverAddr.sin_port = htons(port);
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    server = socket(AF_INET, SOCK_DGRAM, 0);
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = INADDR_ANY;
 
     // Bind socket
-    bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    bind(server, (struct sockaddr*)&servaddr, sizeof(servaddr));
 
-    printf("\nWaiting for client...\n");
+    while(1){
+        memset(buffer,0,sizeof(buffer));
+        recvfrom(server, buffer, sizeof(buffer),0, (struct sockaddr*)&cliAddr, &clen);
+        printf("client: %s\n", buffer);
+        if(strcmp(buffer, "exit") == 0){
+            break;
+        }
+        printf("server: ");
+        fgets(buffer,sizeof(buffer),stdin);
+        buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+        sendto(server,buffer,sizeof(buffer),0,(struct sockaddr*)&cliAddr,clen);
 
-    len = sizeof(clientAddr);
-    bzero(&clientAddr, sizeof(clientAddr));
 
-    // Receive message from client
-    recvfrom(serverSocket, message, sizeof(message), 0, (struct sockaddr*)&clientAddr, &len);
-    printf("\nReceived from client: %s\n", message);
-
-    // Send response
-    printf("\nSending response to client...\n");
-    sendto(serverSocket, "YOUR MESSAGE RECEIVED.", 22, 0, (struct sockaddr*)&clientAddr, len);
-
-    // Close socket
-    close(serverSocket);
+    }
+    close(server);
     return 0;
 }

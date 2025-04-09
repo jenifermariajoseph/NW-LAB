@@ -23,7 +23,7 @@ int main(){
     client = accept(server, (struct sockaddr*)&cliaddr, &clen);
     while(recv(client, &packet, sizeof(packet),0)>0){
         printf("Received packet: %d\n", packet);
-        if(rand()%6 ==0){
+        if(rand()%3 ==0){
             printf("ACK lost for packet: %d\n\n", packet);
             sleep(1);
             continue;

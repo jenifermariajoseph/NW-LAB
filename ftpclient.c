@@ -10,22 +10,24 @@ int client;
 struct sockaddr_in servaddr;
 char buffer[1024]={0};
 socklen_t slen =sizeof(servaddr);
-client = socket(AF_INET,SOCK_DGRAM,0);
+client = socket(AF_INET,SOCK_STREAM,0);
 servaddr.sin_family=AF_INET;
 servaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
 servaddr.sin_port=htons(PORT);
+connect(client,(struct sockaddr*)&servaddr,slen);
 
 while(1){
 
     printf("client:");
     fgets(buffer,sizeof(buffer),stdin);
     buffer[strcspn(buffer,"\n")]='\0';
-    sendto(client,buffer,sizeof(buffer),0,(struct sockaddr*)&servaddr,slen);
+    send(client,buffer,sizeof(buffer),0);
     if(strcmp(buffer,"exit")==0){
         break;
     }
     memset(buffer,0,sizeof(buffer));
-    recvfrom(client,buffer,sizeof(buffer),0,(struct sockaddr*)&servaddr,&slen);
+    int bytes = read(client,buffer,sizeof(buffer));
+    buffer[bytes] = '\0'; // Null-terminate the received data
     printf("server: %s\n",buffer);
 
 

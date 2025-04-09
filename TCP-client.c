@@ -1,46 +1,38 @@
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <strings.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+#define PORT 8080
 
 int main() {
-    int client_socket, port_number;
-    struct sockaddr_in server_address;
-    socklen_t address_length;
-    char message[50];
+    int client;
+    struct sockaddr_in servaddr;
+    socklen_t slen = sizeof(servaddr);
+    char buffer[1024] = {0};
 
     // Create a socket
-    client_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-    // Initialize server address structure
-    bzero((char*)&server_address, sizeof(server_address));
-    address_length = sizeof(server_address);
-    server_address.sin_family = AF_INET;
-
-    // Get port number from user
-    printf("Enter the port number: ");
-    scanf("%d", &port_number);
-    server_address.sin_port = htons(port_number);
+    client = socket(AF_INET, SOCK_STREAM, 0);
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
+    servaddr.sin_port = htons(PORT);
 
     // Attempt connection to the server
     printf("\nTrying to connect to the server...\n");
-    connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address));
+    connect(client, (struct sockaddr*)&servaddr,slen);
     printf("\nConnected to the server.\n");
+    while(1){
+        printf("client:");
+        fgets(buffer,sizeof(buffer),stdin);
+        buffer[strcspn(buffer,"\n")]=='0';
+        send(client,buffer,sizeof(buffer),0);
+        if(strcmp(buffer,"exit")==0){
+            break;
+        }
+        memset(buffer,0,sizeof(buffer));
+        read(client,buffer,sizeof(buffer));
+        printf("server: %s\n",buffer);
+    }
 
-    // Send message to the server
-    printf("\nSending message to server...\n");
-    send(client_socket, "HI, I AM CLIENT...", sizeof("HI, I AM CLIENT..."), 0);
-
-    // Receive response from server
-    printf("\nReceiving message from server...\n");
-    recv(client_socket, message, sizeof(message), 0);
-    
-    // Print received message
-    printf("\nMessage received: %s\n", message);
-
-    // Close the socket
-    close(client_socket);
+    close(client);
 }

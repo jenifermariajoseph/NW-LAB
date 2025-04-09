@@ -1,40 +1,36 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <string.h>
 
 int main() {
-    int clientSocket, port;
+    int client, port=8080;
     struct sockaddr_in serverAddr;
-    socklen_t len;
-    char message[50];
+    socklen_t len=sizeof(serverAddr);
+    char buffer[1024] = {0};
+
 
     // Create UDP socket
-    clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // Initialize server address
-    bzero(&serverAddr, sizeof(serverAddr));
+    client = socket(AF_INET, SOCK_DGRAM, 0);
     serverAddr.sin_family = AF_INET;
-
-    printf("Enter port number: ");
-    scanf("%d", &port);
     serverAddr.sin_port = htons(port);
+    serverAddr.sin_addr.s_addr=inet_addr("127.0.0.1");
 
-    // Flush newline from input buffer before reading message
-    getchar();
-    printf("Enter message: ");
-    fgets(message, sizeof(message), stdin);
+    while(1){
+    printf("client: ");
+    fgets(buffer, sizeof(buffer), stdin);
+    buffer[strcspn(buffer, "\n")] = '\0'; // Remove newline character
+    sendto(client, buffer, sizeof(buffer), 0, (struct sockaddr*)&serverAddr, len);
+    if(strcmp(buffer, "exit") == 0){
+        break;
 
-    printf("\nSending message to server...\n");
-    sendto(clientSocket, message, strlen(message), 0, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
-
-    // Receive response
-    len = sizeof(serverAddr);
-    recvfrom(clientSocket, message, sizeof(message), 0, (struct sockaddr*)&serverAddr, &len);
-    printf("\nMessage from server: %s\n", message);
-
-    // Close socket
-    close(clientSocket);
+    }
+    memset(buffer, 0, sizeof(buffer));
+    recvfrom(client, buffer, sizeof(buffer), 0, (struct sockaddr*)&serverAddr, &len);
+    printf("server: %s\n", buffer);
+    }
+    close(client);
     return 0;
 }
+
