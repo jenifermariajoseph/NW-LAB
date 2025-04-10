@@ -1,65 +1,34 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
-#define NOF_PACKETS 10  // Number of packets
+void main(){
+    int size, n, input, output, curr;
 
-// Generates random packet sizes (multiples of 10)
-int getRandomSize(int max) {
-    int size = (rand() % max) + 1;  // Ensures size is never 0
-    return size * 10;
-}
+    printf("\nEnter Bucket Size: ");
+    scanf("%d", &size);
 
-int main() {
-    int packet[NOF_PACKETS], i, bucketSize, outputRate, remaining = 0;
+    printf("\nEnter Flow Rate: ");
+    scanf("%d", &output);
 
-    // Generate and display packet sizes
-    printf("Generated Packets:\n");
-    for (i = 0; i < NOF_PACKETS; i++) {
-        packet[i] = getRandomSize(5);  // Random sizes between 10-50 bytes
-        printf("Packet[%d]: %d bytes\n", i + 1, packet[i]);
+    printf("\nEnter Number of Inputs: ");
+    scanf("%d", &n);
+
+    curr = 0;
+    for(int i=0; i<n; i++){
+        printf("\nEnter Incoming packet sizes: ");
+        scanf("%d", &input);
+
+        if(input <= (size - curr)){
+            curr += input;
+            printf("\nBucket Size is %d / %d\n", curr, size);
+        }
+        else {
+            printf("\ndropped %d packets: ", input - (size - curr)); 
+            curr = size; // Ensure bucket is correctly updated
+            printf("\nBucket Size is %d / %d\n", curr, size);
+        }
+
+        // Prevent curr from going negative
+        curr = (curr - output >= 0) ? curr - output : 0;
+        printf("\n%d packets remaining", curr);
     }
-
-    // User input: output rate and bucket size
-    printf("\nEnter Output Rate: ");
-    scanf("%d", &outputRate);
-    printf("Enter Bucket Size: ");
-    scanf("%d", &bucketSize);
-
-    // Process packets
-    for (i = 0; i < NOF_PACKETS; i++) {
-        // Check if the packet is too large
-        if (packet[i] > bucketSize) {
-            printf("\nPacket[%d] (%d bytes) exceeds bucket size (%d) - REJECTED!", i + 1, packet[i], bucketSize);
-            continue;
-        }
-
-        // Check if bucket overflows
-        if (remaining + packet[i] > bucketSize) {
-            printf("\nBucket full! Packet[%d] (%d bytes) - REJECTED!", i + 1, packet[i]);
-            continue;
-        }
-
-        // Accept packet into the bucket
-        remaining += packet[i];
-        printf("\nPacket[%d]: %d bytes added to bucket. Remaining: %d bytes", i + 1, packet[i], remaining);
-
-        // Simulate transmission
-        while (remaining > 0) {
-            sleep(1);  // Simulating delay
-            
-            int sent;
-            if (remaining < outputRate) {
-                sent = remaining;
-            } else {
-                sent = outputRate;
-            }
-            
-            remaining -= sent;
-            printf("\nTransmitted: %d bytes | Remaining: %d bytes", sent, remaining);
-        }
-    }
-
-    printf("\n\nAll packets processed!\n");
-    return 0;
 }

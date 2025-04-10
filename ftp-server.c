@@ -32,20 +32,22 @@ while(1){
     read(client,buffer,sizeof(buffer));
     printf("client: %s\n",buffer);
     FILE *fp=fopen(buffer,"r");
+ 
     if(fp == NULL){
         strcpy(buffer, "File not found");
         send(client, buffer, sizeof(buffer), 0);
         continue;
     }
     while(!feof(fp)){
-        int bytes=fread(buffer,1,sizeof(buffer),fp);
-        reverse(buffer, bytes); 
-        send(client,buffer,bytes,0);
+       int bytes=fread(buffer,1,sizeof(buffer),fp);
+       reverse(buffer, bytes); 
+       send(client,buffer,bytes,0);
 
     }
     if(strcmp(buffer,"exit")==0){
         break;
     }
+    fclose(fp);
 
 }
 
